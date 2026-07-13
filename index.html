@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Password Vault Generator</title>
+    <!-- Tailwind CSS Play CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .vault-glow {
+            text-shadow: 0 0 10px rgba(16, 185, 129, 0.5), 0 0 20px rgba(16, 185, 129, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-6 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.05)_0,transparent_70%)]">
+
+    <header class="text-center mb-8">
+        <h1 class="text-3xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-500 uppercase vault-glow">
+            🔒 Safe Vault Generator
+        </h1>
+        <p class="text-slate-400 text-xs mt-1">Test your password security strength or auto-generate unbreakable passwords live!</p>
+    </header>
+
+    <div class="max-w-xl w-full bg-slate-900 border border-slate-800 p-6 sm:p-8 rounded-3xl shadow-2xl space-y-6 relative overflow-hidden backdrop-blur-md">
+        
+        <!-- Input Display Section -->
+        <div class="space-y-2">
+            <label class="block text-xs font-bold text-emerald-400 uppercase tracking-wider">Analyze or Generate Password</label>
+            <div class="flex gap-2 relative">
+                <input id="passwordInput" type="text" placeholder="Type a password or click generate..." 
+                       class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 font-mono tracking-wide text-sm pr-12">
+               <button id="copyBtn" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-emerald-400 font-bold text-sm transition-colors z-10" title="Copy Password">
+                📋
+            </button>
+
+            </div>
+        </div>
+
+        <!-- Live Strength Progress Bar meter -->
+        <div class="space-y-1.5">
+            <div class="flex justify-between items-center text-xs font-semibold px-0.5">
+                <span class="text-slate-400">Security Strength:</span>
+                <span id="strengthText" class="text-slate-500 uppercase tracking-wide font-bold">Empty</span>
+            </div>
+            <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800/40">
+                <div id="strengthBar" class="w-0 h-full bg-slate-800 transition-all duration-300"></div>
+            </div>
+        </div>
+
+        <!-- Customized Checkboxes Parameters Matrix -->
+        <div class="grid grid-cols-2 gap-3 bg-slate-950/40 border border-slate-800/50 p-4 rounded-xl text-xs font-medium text-slate-400">
+            <div class="flex items-center gap-2">
+                <input type="checkbox" id="incUppercase" checked class="w-4 h-4 rounded accent-emerald-500 bg-slate-950 border-slate-800 cursor-pointer">
+                <label for="incUppercase" class="cursor-pointer select-none">ABC Uppercase</label>
+            </div>
+            <div class="flex items-center gap-2">
+                <input type="checkbox" id="incNumbers" checked class="w-4 h-4 rounded accent-emerald-500 bg-slate-950 border-slate-800 cursor-pointer">
+                <label for="incNumbers" class="cursor-pointer select-none">123 Numbers</label>
+            </div>
+            <div class="flex items-center gap-2">
+                <input type="checkbox" id="incLowercase" checked class="w-4 h-4 rounded accent-emerald-500 bg-slate-950 border-slate-800 cursor-pointer">
+                <label for="incLowercase" class="cursor-pointer select-none">abc Lowercase</label>
+            </div>
+            <div class="flex items-center gap-2">
+                <input type="checkbox" id="incSymbols" checked class="w-4 h-4 rounded accent-emerald-500 bg-slate-950 border-slate-800 cursor-pointer">
+                <label for="incSymbols" class="cursor-pointer select-none">#$& Symbols</label>
+            </div>
+        </div>
+
+        <!-- Slider Range setup for Password lengths character scaling -->
+        <div class="space-y-2">
+            <div class="flex justify-between text-xs font-semibold text-slate-400 px-0.5">
+                <span>Password Length:</span>
+                <span id="lengthVal" class="text-emerald-400 font-bold font-mono">12</span>
+            </div>
+            <input id="lengthSlider" type="range" min="6" max="32" value="12" 
+                   class="w-full h-1.5 bg-slate-950 rounded-lg appearance-none cursor-pointer accent-emerald-500 border border-slate-800/40">
+        </div>
+
+        <!-- FIXED: Added explicit onclick handler for direct invocation -->
+        <button onclick="generateSecurePassword()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-slate-950 font-bold py-3 rounded-xl transition-all shadow-lg active:scale-[0.98] text-sm uppercase tracking-wider">
+            ⚡ Generate Secure Code
+        </button>
+    </div>
+
+    <!-- JavaScript Safety Meter Core Framework -->
+    <script>
+        const passwordInput = document.getElementById('passwordInput');
+        const copyBtn = document.getElementById('copyBtn');
+        const strengthText = document.getElementById('strengthText');
+        const strengthBar = document.getElementById('strengthBar');
+        const lengthSlider = document.getElementById('lengthSlider');
+        const lengthVal = document.getElementById('lengthVal');
+
+        const incUppercase = document.getElementById('incUppercase');
+        const incLowercase = document.getElementById('incLowercase');
+        const incNumbers = document.getElementById('incNumbers');
+        const incSymbols = document.getElementById('incSymbols');
+
+        const uppercaseChars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+        const lowercaseChars = "abcdefghijklmnopqrstuvwxyz";
+        const numberChars = "0123456789";
+        const symbolChars = "!@#$%^&*()_+~`|}{[]:;?><,./-=";
+
+        passwordInput.addEventListener('input', () => {
+            evaluatePasswordStrength(passwordInput.value);
+        });
+
+        lengthSlider.addEventListener('input', (e) => {
+            lengthVal.innerText = e.target.value;
+        });
+
+        function evaluatePasswordStrength(password) {
+            if (password === "") {
+                strengthText.innerText = "Empty";
+                strengthText.className = "text-slate-500 uppercase tracking-wide font-bold";
+                strengthBar.style.width = "0%";
+                strengthBar.className = "h-full bg-slate-800 transition-all duration-300";
+                return;
+            }
+
+            let score = 0;
+            if (password.length >= 8) score++;
+            if (password.length >= 14) score++;
+            if (/[A-Z]/.test(password)) score++;
+            if (/[a-z]/.test(password)) score++;
+            if (/[0-9]/.test(password)) score++;
+            if (/[^A-Za-z0-9]/.test(password)) score++;
+
+            if (score <= 2) {
+                strengthText.innerText = "Weak 🛑";
+                strengthText.className = "text-rose-500 uppercase tracking-wide font-bold";
+                strengthBar.style.width = "33%";
+                strengthBar.className = "h-full bg-rose-500 transition-all duration-300 shadow-[0_0_10px_rgba(244,63,94,0.4)]";
+            } else if (score <= 4) {
+                strengthText.innerText = "Medium ⚠️";
+                strengthText.className = "text-amber-500 uppercase tracking-wide font-bold";
+                strengthBar.style.width = "66%";
+                strengthBar.className = "h-full bg-amber-500 transition-all duration-300 shadow-[0_0_10px_rgba(245,158,11,0.4)]";
+            } else {
+                strengthText.innerText = "Strong 💪";
+                strengthText.className = "text-emerald-400 uppercase tracking-wide font-bold";
+                strengthBar.style.width = "100%";
+                strengthBar.className = "h-full bg-emerald-500 transition-all duration-300 shadow-[0_0_12px_rgba(16,185,129,0.5)]";
+            }
+        }
+
+               // 3. Exposed to global scope window for onclick accessibility with success toast
+        window.generateSecurePassword = function() {
+            let allowedPoolChars = "";
+            if (incUppercase.checked) allowedPoolChars += uppercaseChars;
+            if (incLowercase.checked) allowedPoolChars += lowercaseChars;
+            if (incNumbers.checked) allowedPoolChars += numberChars;
+            if (incSymbols.checked) allowedPoolChars += symbolChars;
+
+            if (allowedPoolChars === "") {
+                incUppercase.checked = true;
+                incLowercase.checked = true;
+                incNumbers.checked = true;
+                incSymbols.checked = true;
+                allowedPoolChars = uppercaseChars + lowercaseChars + numberChars + symbolChars;
+            }
+
+            let computedPasswordResult = "";
+            const targetLength = parseInt(lengthSlider.value);
+
+            for (let i = 0; i < targetLength; i++) {
+                const randomChoiceIndex = Math.floor(Math.random() * allowedPoolChars.length);
+                computedPasswordResult += allowedPoolChars.charAt(randomChoiceIndex);
+            }
+
+            passwordInput.value = computedPasswordResult;
+            evaluatePasswordStrength(computedPasswordResult);
+            
+            // FIX: Added custom top-center pop-up message for successful code generation
+            showTopToast("Secure password generated successfully! 🔑", "success");
+        };
+
+        // Custom Notification Function (Top-Center Toast Layout)
+        function showTopToast(message, type = "success") {
+            const toast = document.createElement('div');
+            const bgGradient = type === "success" ? "from-emerald-500 to-teal-600 border-emerald-400/20" : "from-rose-500 to-red-600 border-red-400/20";
+            const icon = type === "success" ? "📋" : "❌";
+            
+            // Added text-white for perfect text visibility inside the dark gradient box
+            toast.className = `fixed top-4 left-1/2 -translate-x-1/2 bg-gradient-to-r ${bgGradient} text-white font-semibold px-5 py-3 rounded-xl shadow-2xl z-50 flex items-center gap-3 text-xs tracking-wide border transition-all duration-300 transform -translate-y-10 opacity-0`;
+            toast.innerHTML = `<span>${icon}</span><span>${message}</span>`;
+            
+            document.body.appendChild(toast);
+            setTimeout(() => toast.classList.remove('-translate-y-10', 'opacity-0'), 10);
+            
+            setTimeout(() => {
+                toast.classList.add('-translate-y-10', 'opacity-0');
+                setTimeout(() => toast.remove(), 300);
+            }, 3000);
+        }
+
+        // --- FIXED CLIPBOARD ICON EVENT LISTENER ---
+        copyBtn.addEventListener('click', () => {
+            if (passwordInput.value === "") {
+                showTopToast("Nothing to copy yet! Please input or generate a password first.", "error");
+                return;
+            }
+            
+            // Clipboard data interaction framework
+            navigator.clipboard.writeText(passwordInput.value).then(() => {
+                showTopToast("Secure password code safely copied to clipboard!", "success");
+            }).catch(() => {
+                showTopToast("Error copying code to clipboard.", "error");
+            });
+        });
+
+    </script>
+</body>
+</html>
