@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Secure Password Vault Generator</title>
+    <!-- Tailwind CSS Play CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .vault-glow {
+            text-shadow: 0 0 10px rgba(16, 185, 129, 0.5), 0 0 20px rgba(16, 185, 129, 0.3);
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 min-h-screen flex flex-col items-center justify-center p-6 bg-[radial-gradient(circle_at_center,rgba(16,185,129,0.05)_0,transparent_70%)]">
+
+        <!-- DYNAMIC FLOATING NOTIFICATION TOP-CENTER -->
+<div id="vaultNotification" class="fixed top-6 left-1/2 -translate-x-1/2 bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 backdrop-blur-md font-bold px-5 py-3 rounded-xl text-xs Lowercasetracking-wider shadow-[0_0_30px_rgba(16,185,129,0.15)] transition-all duration-300 transform -translate-y-10 opacity-0 pointer-events-none z-50 flex items-center gap-2">
+    <span id="notificationIcon">⚡</span> 
+    <span id="notificationMessage">Password generated successfully!</span>
+    </div>
+
+    <header class="text-center mb-8">
+        <h1 class="text-3xl font-black tracking-widest text-transparent bg-clip-text bg-gradient-to-r from-emerald-400 via-teal-400 to-cyan-500 uppercase vault-glow">
+            🔒 Safe Vault Generator
+        </h1>
+        <p class="text-slate-400 text-xs mt-1">Test your password security strength or auto-generate unbreakable passwords live!</p>
+    </header>
+
+    <div class="max-w-xl w-full bg-slate-900 border border-slate-800 p-6 sm:p-8 rounded-3xl shadow-2xl space-y-6 relative overflow-hidden backdrop-blur-md">
+        
+        <!-- Input Display Section -->
+        <div class="space-y-2">
+            <label class="block text-xs font-bold text-emerald-400 uppercase tracking-wider">Analyze or Generate Password</label>
+            <div class="flex gap-2 relative">
+                <input id="passwordInput" type="text" placeholder="generate..." 
+                       class="w-full px-4 py-3 rounded-xl bg-slate-950 border border-slate-800 text-white placeholder-slate-600 focus:outline-none focus:border-emerald-500 font-mono tracking-wide text-sm pr-12">
+               <button id="copyBtn" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-emerald-400 font-bold text-sm transition-colors z-10" title="Copy Password">
+                📋
+            </button>
+
+            </div>
+        </div>
+
+        <!-- Live Strength Progress Bar meter -->
+        <div class="space-y-1.5">
+            <div class="flex justify-between items-center text-xs font-semibold px-0.5">
+                <span class="text-slate-400">Security Strength:</span>
+                <span id="strengthText" class="text-slate-500 uppercase tracking-wide font-bold">Empty</span>
+            </div>
+            <div class="w-full h-2 bg-slate-950 rounded-full overflow-hidden border border-slate-800/40">
+                <div id="strengthBar" class="w-0 h-full bg-slate-800 transition-all duration-300"></div>
+            </div>
+        </div>
+
+        <!-- Customized Checkboxes Parameters Matrix -->
+        <div class="grid grid-cols-2 gap-3 bg-slate-950/40 border border-slate-800/50 p-4 rounded-xl text-xs font-medium text-slate-400">
+            <div class="flex items-center gap-2">
+                <input type="checkbox" id="incUppercase" checked class="w-4 h-4 rounded accent-emerald-500 bg-slate-950 border-slate-800 cursor-pointer">
+                <label for="incUppercase" class="cursor-pointer select-none">ABC Uppercase</label>
+            </div>
+            <div class="flex items-center gap-2">
+                <input type="checkbox" id="incNumbers" checked class="w-4 h-4 rounded accent-emerald-500 bg-slate-950 border-slate-800 cursor-pointer">
+                <label for="incNumbers" class="cursor-pointer select-none">123 Numbers</label>
+            </div>
+            <div class="flex items-center gap-2">
+                <input type="checkbox" id="incLowercase" checked class="w-4 h-4 rounded accent-emerald-500 bg-slate-950 border-slate-800 cursor-pointer">
+                <label for="incLowercase" class="cursor-pointer select-none">abc Lowercase</label>
+            </div>
+            <div class="flex items-center gap-2">
+                <input type="checkbox" id="incSymbols" checked class="w-4 h-4 rounded accent-emerald-500 bg-slate-950 border-slate-800 cursor-pointer">
+                <label for="incSymbols" class="cursor-pointer select-none">#$& Symbols</label>
+            </div>
+        </div>
+
+        <!-- Slider Range setup for Password lengths character scaling -->
+        <div class="flex flex-col space-y-2 px-1 my-2"> 
+        <div class="flex justify-between text-xs text-slate-400"> 
+        <span>Password Length</span> 
+        <!-- Visual number that updates instantly -->
+        <span id="lengthVal" class="text-emerald-400 font-bold">12</span> 
+        </div> 
+        <input type="range" id="lengthSlider" min="8" max="16" value="12"class="w-full accent-emerald-500 bg-slate-800 h-1.5 rounded-lg appearance-none cursor-pointer"oninput="document.getElementById('lengthVal').innerText = this.value"/> 
+        </div>
+
+        <!-- FIXED: Added explicit onclick handler for direct invocation -->
+        <button onclick="generateSecurePassword()" class="w-full bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-slate-950 font-bold py-3 rounded-xl transition-all shadow-lg active:scale-[0.98] text-sm uppercase tracking-wider">
+            ⚡ Generate Secure Code
+        </button>
+    </div>
+
+    <!-- JavaScript Safety Meter Core Framework -->
+    <script>
+
+            document.addEventListener('DOMContentLoaded', () => {
+        // Elements Selection
+        const slider = document.getElementById('lengthSlider');
+        const valueSpan = document.getElementById('lengthVal');
+        const passwordInput = document.getElementById('passwordInput');
+        const strengthText = document.getElementById('strengthText');
+        const strengthBar = document.getElementById('strengthBar');
+        const copyBtn = document.getElementById('copyBtn');
+
+        const incUppercase = document.getElementById('incUppercase');
+        const incLowercase = document.getElementById('incLowercase');
+        const incNumbers = document.getElementById('incNumbers');
+        const incSymbols = document.getElementById('incSymbols');
+
+        // Slider Input Real-time Update
+        if (slider && valueSpan) {
+            slider.addEventListener('input', (event) => {
+            valueSpan.textContent = event.target.value;
+            if (passwordInput && passwordInput.value !== "") {
+                updateStrength(passwordInput.value.length);
+            }
+            });
+        }
+
+        // 1. GLOBAL NOTIFICATION TRIGGER MANAGER (Top-Center Logic)
+        let notificationTimeout;
+        function showVaultNotification(icon, message) {
+            const toast = document.getElementById('vaultNotification');
+            const toastIcon = document.getElementById('notificationIcon');
+            const toastMsg = document.getElementById('notificationMessage');
+
+            if (!toast || !toastIcon || !toastMsg) return;
+
+            clearTimeout(notificationTimeout);
+
+            toastIcon.textContent = icon;
+            toastMsg.textContent = message;
+
+            toast.classList.remove('-translate-y-10', 'opacity-0', 'pointer-events-none');
+            toast.classList.add('translate-y-0', 'opacity-100');
+
+            notificationTimeout = setTimeout(() => {
+            toast.classList.remove('translate-y-0', 'opacity-100');
+            toast.classList.add('-translate-y-10', 'opacity-0', 'pointer-events-none');
+            }, 2500);
+        }
+
+        // 2. HUMAN-READABLE / DECRYPTED PASSWORD GENERATOR
+        window.generateSecurePassword = function() {
+            if (!slider || !passwordInput) return;
+            const targetLength = parseInt(slider.value);
+
+            // Premium common readable words database
+            const wordsPool = [
+            "safe", "vault", "secure", "lock", "key", "guard", "shield", "fort", "cloud", "cyber",
+            "smart", "alpha", "bravo", "delta", "nexus", "pixel", "focus", "prime", "matrix", "vortex",
+            "storm", "frost", "shadow", "light", "flame", "ocean", "river", "forest", "stone", "iron",
+            "tiger", "eagle", "hawk", "lion", "wolf", "falcon", "phoenix", "rocket", "comet", "orbit"
+            ];
+            
+            const numbersPool = "23456789".split("");
+            const symbolsPool = "@#$&?*".split("");
+
+            let optionsCount = 0;
+            if (incUppercase && incUppercase.checked) optionsCount++;
+            if (incLowercase && incLowercase.checked) optionsCount++;
+            if (incNumbers && incNumbers.checked) optionsCount++;
+            if (incSymbols && incSymbols.checked) optionsCount++;
+
+            if (optionsCount === 0) {
+            alert("Please select at least one character type!");
+            return;
+            }
+
+            let resultPassword = "";
+
+            // A: Agar words/letters allowed hain toh pehle readable words pick karein
+            if ((incLowercase && incLowercase.checked) || (incUppercase && incUppercase.checked)) {
+            while (resultPassword.length < targetLength - 3) { // Margin for digits/symbols
+                let randomWord = wordsPool[Math.floor(Math.random() * wordsPool.length)];
+                
+                // Uppercase handle karein (Pehla letter Capital baaki small)
+                if (incUppercase && incUppercase.checked && !incLowercase.checked) {
+                randomWord = randomWord.toUpperCase();
+                } else if (incUppercase && incUppercase.checked) {
+                randomWord = randomWord.charAt(0).toUpperCase() + randomWord.slice(1);
+                } else {
+                randomWord = randomWord.toLowerCase();
+                }
+                
+                resultPassword += randomWord;
+            }
+            }
+
+            // B: Inject clean numbers safely
+            if (incNumbers && incNumbers.checked) {
+            const numLength = targetLength - resultPassword.length > 2 ? 2 : 1;
+            for (let i = 0; i < numLength; i++) {
+                if (resultPassword.length < targetLength) {
+                resultPassword += numbersPool[Math.floor(Math.random() * numbersPool.length)];
+                }
+            }
+            }
+
+            // C: Inject clean symbols safely
+            if (incSymbols && incSymbols.checked) {
+            while (resultPassword.length < targetLength) {
+                resultPassword += symbolsPool[Math.floor(Math.random() * symbolsPool.length)];
+            }
+            }
+
+            // D: Agar abhi bhi characters bache hain ya user ne sirf symbols/numbers chunk kiya hai
+            while (resultPassword.length < targetLength) {
+            if (incNumbers && incNumbers.checked) {
+                resultPassword += numbersPool[Math.floor(Math.random() * numbersPool.length)];
+            } else if (incSymbols && incSymbols.checked) {
+                resultPassword += symbolsPool[Math.floor(Math.random() * symbolsPool.length)];
+            } else {
+                resultPassword += "x"; // Fallback safe padding character
+            }
+            }
+
+            // Exact Length trim layout mapping
+            resultPassword = resultPassword.substring(0, targetLength);
+
+            passwordInput.value = resultPassword;
+            updateStrength(targetLength, optionsCount);
+
+            // Notification toast alert cascade trigger
+            showVaultNotification("🔑", "Secure password generated successfully!");
+        };
+
+        // 3. STRENGTH PROGRESS BAR CALCULATOR
+        function updateStrength(length, optionsCount = null) {
+            if (!strengthText || !strengthBar) return;
+
+            if (optionsCount === null) {
+            optionsCount = 0;
+            if (incUppercase && incUppercase.checked) optionsCount++;
+            if (incLowercase && incLowercase.checked) optionsCount++;
+            if (incNumbers && incNumbers.checked) optionsCount++;
+            if (incSymbols && incSymbols.checked) optionsCount++;
+            }
+
+            if (length < 10 || optionsCount <= 1) {
+            strengthText.textContent = "WEAK ⚠️";
+            strengthText.className = "text-red-500 uppercase tracking-wide font-bold";
+            strengthBar.className = "h-full bg-red-500 transition-all duration-300";
+            strengthBar.style.width = "33%";
+            } else if (length < 13 || optionsCount <= 3) {
+            strengthText.textContent = "MEDIUM ⚡";
+            strengthText.className = "text-yellow-500 uppercase tracking-wide font-bold";
+            strengthBar.className = "h-full bg-yellow-500 transition-all duration-300";
+            strengthBar.style.width = "66%";
+            } else {
+            strengthText.textContent = "STRONG 💪";
+            strengthText.className = "text-emerald-400 uppercase tracking-wide font-bold";
+            strengthBar.className = "h-full bg-emerald-500 transition-all duration-300";
+            strengthBar.style.width = "100%";
+            }
+        }
+
+        // 4. COPY TO CLIPBOARD HANDLER
+        if (copyBtn && passwordInput) {
+            copyBtn.addEventListener('click', () => {
+            if (!passwordInput.value || passwordInput.value === "generate...") return;
+            
+            navigator.clipboard.writeText(passwordInput.value)
+                .then(() => {
+                showVaultNotification("📋", "Secure password code safely copied to clipboard!");
+                })
+                .catch(err => console.error("Error writing to clipboard: ", err));
+            });
+        }
+
+        // Live Checkbox Synced Changes
+        [incUppercase, incLowercase, incNumbers, incSymbols].forEach(checkbox => {
+            if (checkbox) checkbox.addEventListener('change', () => {
+            if (passwordInput && passwordInput.value !== "") updateStrength(passwordInput.value.length);
+            });
+        });
+     });
+
+  </script>
+</body>
+</html>
