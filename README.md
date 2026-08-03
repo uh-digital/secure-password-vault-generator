@@ -10,7 +10,7 @@ The tool generates clean, human-readable passwords while providing a **live pass
 
 ## 📸 Preview
 
-![Secure Password Vault Generator Preview](./assets/SafeVaultGenerator.png)
+![Secure Password Vault Generator Preview](assets/)
 
 ## ✨ Features
 
