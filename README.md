@@ -79,4 +79,6 @@ secure-password-vault-generator/
 │
 ├── index.html
 └── assets/
-    └── screenshot.png
+   └── screenshot.png
+│
+└── README.md
