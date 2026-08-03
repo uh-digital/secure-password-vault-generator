@@ -6,7 +6,7 @@ The tool generates clean, human-readable passwords while providing a **live pass
 
 ## 🌐 Live Demo
 
-👉 **[View Live Demo](YOUR_GITHUB_IO_LINK_HERE)**
+👉 **[View Live Demo](https://uh-digital.github.io/secure-password-vault-generator/)**
 
 ## 📸 Preview
 
